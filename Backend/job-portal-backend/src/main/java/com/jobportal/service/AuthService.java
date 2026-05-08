@@ -52,45 +52,56 @@ public class AuthService {
     // ---- GOOGLE AUTH ----
 
     public AuthResponse loginWithGoogle(GoogleAuthRequest request) throws Exception {
-        GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
-                new NetHttpTransport(), GsonFactory.getDefaultInstance())
-                .setAudience(Collections.singletonList(googleClientId))
-                .build();
+        try {
+            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
+                    new NetHttpTransport(), GsonFactory.getDefaultInstance())
+                    .setAudience(Collections.singletonList(googleClientId))
+                    .build();
 
-        GoogleIdToken idToken = verifier.verify(request.getIdToken());
-        if (idToken == null) {
-            throw new RuntimeException("Invalid Google ID token");
+            GoogleIdToken idToken = verifier.verify(request.getIdToken());
+            if (idToken == null) {
+                log.error("Invalid Google ID token received");
+                throw new RuntimeException("Invalid Google ID token");
+            }
+
+            GoogleIdToken.Payload payload = idToken.getPayload();
+            String email = payload.getEmail();
+            String name = (String) payload.get("name");
+            String picture = (String) payload.get("picture");
+
+            log.info("Google login attempt for email: {}", email);
+
+            boolean isNewUser = !userRepository.existsByEmail(email);
+
+            User user = userRepository.findByEmail(email).orElseGet(() ->
+                    User.builder()
+                            .email(email)
+                            .name(name)
+                            .profilePicture(picture)
+                            .authProvider(User.AuthProvider.GOOGLE)
+                            .build()
+            );
+
+            user.setName(name);
+            user.setProfilePicture(picture);
+            user = userRepository.save(user);
+
+            String token = jwtUtil.generateToken(user.getId(), user.getRole().name());
+
+            log.info("Google login successful for: {}", email);
+
+            return AuthResponse.builder()
+                    .token(token)
+                    .name(user.getName())
+                    .email(user.getEmail())
+                    .role(user.getRole().name())
+                    .isNewUser(isNewUser)
+                    .build();
+
+        } catch (Exception e) {
+            log.error("Google login error: {}", e.getMessage());
+            throw e;
         }
-
-        GoogleIdToken.Payload payload = idToken.getPayload();
-        String email = payload.getEmail();
-        String name = (String) payload.get("name");
-        String picture = (String) payload.get("picture");
-
-        boolean isNewUser = !userRepository.existsByEmail(email);
-
-        User user = userRepository.findByEmail(email).orElseGet(() ->
-                User.builder()
-                        .email(email)
-                        .name(name)
-                        .profilePicture(picture)
-                        .authProvider(User.AuthProvider.GOOGLE)
-                        .build()
-        );
-
-        user.setName(name);
-        user.setProfilePicture(picture);
-        user = userRepository.save(user);
-
-        String token = jwtUtil.generateToken(user.getId(), user.getRole().name());
-
-        return AuthResponse.builder()
-                .token(token)
-                .name(user.getName())
-                .email(user.getEmail())
-                .role(user.getRole().name())
-                .isNewUser(isNewUser)
-                .build();
     }
     // ---- PHONE OTP AUTH ----
 
