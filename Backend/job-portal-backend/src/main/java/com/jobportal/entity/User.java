@@ -32,7 +32,7 @@ public class User {
 
     // "USER" or "ADMIN"
     @Enumerated(EnumType.STRING)
-    @Builder.Default
+    
     private Role role = Role.USER;
 
     @Builder.Default
