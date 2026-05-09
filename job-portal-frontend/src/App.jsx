@@ -8,6 +8,7 @@ import CategoryPage from './pages/CategoryPage'
 import JobDetailPage from './pages/JobDetailPage'
 import SearchPage from './pages/SearchPage'
 import AdminPage from './pages/AdminPage'
+import PrivacyPage from './pages/PrivacyPage'
 
 function ProtectedAdminRoute({ children }) {
   const { isLoggedIn, isAdmin, loading } = useAuth()
@@ -37,6 +38,7 @@ export default function App() {
                 </ProtectedAdminRoute>
               }
             />
+            <Route path="/privacy" element={<PrivacyPage />} />
           </Routes>
         </main>
         <Footer />
