@@ -88,6 +88,12 @@ public class AuthService {
 
             user.setName(name);
             user.setProfilePicture(picture);
+            if (user.getRole() == null) {
+                user.setRole(User.Role.USER);
+            }
+            if (!user.isEnabled()) {
+                user.setEnabled(true);
+            }
             user = userRepository.save(user);
 
             String token = jwtUtil.generateToken(user.getId(), user.getRole().name());
