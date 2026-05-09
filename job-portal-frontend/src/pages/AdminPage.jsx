@@ -7,6 +7,8 @@ const EMPTY_FORM = {
   title: '', organization: '', location: '', description: '',
   applicationLink: '', qualification: '', salary: '',
   lastDate: '', categoryId: '', featured: false, status: 'ACTIVE',
+  totalPosts: '', ageLimit: '', applicationFee: '',
+  examDate: '', admitCardDate: '', notificationLink: '', syllabusLink: '',
 }
 
 export default function AdminPage() {
@@ -65,6 +67,8 @@ export default function AdminPage() {
       categoryId: job.category?.id || '',
       featured: job.featured || false,
       status: job.status || 'ACTIVE',
+      totalPosts: '', ageLimit: '', applicationFee: '',
+      examDate: '', admitCardDate: '', notificationLink: '', syllabusLink: '',
     })
     setShowForm(true)
   }
@@ -73,12 +77,41 @@ export default function AdminPage() {
     e.preventDefault()
     if (!form.applicationLink) { toast.error('Application link is required'); return }
     setSaving(true)
+
+    // Build rich description from extra fields
+    let fullDescription = form.description || ''
+    const extras = []
+    if (form.totalPosts) extras.push(`📋 Total Posts: ${form.totalPosts}`)
+    if (form.ageLimit) extras.push(`🎂 Age Limit: ${form.ageLimit}`)
+    if (form.applicationFee) extras.push(`💰 Application Fee: ${form.applicationFee}`)
+    if (form.examDate) extras.push(`📅 Exam Date: ${form.examDate}`)
+    if (form.admitCardDate) extras.push(`🪪 Admit Card: ${form.admitCardDate}`)
+    if (form.notificationLink) extras.push(`📄 Notification PDF: ${form.notificationLink}`)
+    if (form.syllabusLink) extras.push(`📚 Syllabus: ${form.syllabusLink}`)
+    if (extras.length > 0) {
+      fullDescription = extras.join('\n') + (fullDescription ? '\n\n' + fullDescription : '')
+    }
+
+    const payload = {
+      title: form.title,
+      organization: form.organization,
+      location: form.location,
+      description: fullDescription,
+      applicationLink: form.applicationLink,
+      qualification: form.qualification,
+      salary: form.salary,
+      lastDate: form.lastDate || null,
+      categoryId: Number(form.categoryId),
+      featured: form.featured,
+      status: form.status,
+    }
+
     try {
       if (editingId) {
-        await jobApi.update(editingId, { ...form, categoryId: Number(form.categoryId) })
+        await jobApi.update(editingId, payload)
         toast.success('Job updated!')
       } else {
-        await jobApi.create({ ...form, categoryId: Number(form.categoryId) })
+        await jobApi.create(payload)
         toast.success('Job created!')
       }
       setShowForm(false)
@@ -124,9 +157,7 @@ export default function AdminPage() {
         <button
           onClick={() => setActiveTab('jobs')}
           className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
-            activeTab === 'jobs'
-              ? 'bg-white shadow-sm text-gray-900'
-              : 'text-gray-500 hover:text-gray-700'
+            activeTab === 'jobs' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'
           }`}
         >
           💼 Jobs
@@ -134,9 +165,7 @@ export default function AdminPage() {
         <button
           onClick={() => setActiveTab('messages')}
           className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-1.5 ${
-            activeTab === 'messages'
-              ? 'bg-white shadow-sm text-gray-900'
-              : 'text-gray-500 hover:text-gray-700'
+            activeTab === 'messages' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'
           }`}
         >
           📩 Messages
@@ -151,88 +180,165 @@ export default function AdminPage() {
       {/* ===== JOBS TAB ===== */}
       {activeTab === 'jobs' && (
         <>
-          {/* Form modal */}
           {showForm && (
             <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-              <div className="bg-white rounded-2xl shadow-xl w-full max-w-xl max-h-[90vh] overflow-y-auto">
-                <div className="flex items-center justify-between p-5 border-b">
+              <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                <div className="flex items-center justify-between p-5 border-b sticky top-0 bg-white z-10">
                   <h2 className="font-semibold text-gray-900">
-                    {editingId ? 'Edit Job' : 'Add New Job'}
+                    {editingId ? '✏️ Edit Job' : '➕ Add New Job'}
                   </h2>
-                  <button
-                    onClick={() => setShowForm(false)}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
+                  <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600">
                     <X size={20} />
                   </button>
                 </div>
-                <form onSubmit={handleSubmit} className="p-5 space-y-4">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="col-span-2">
-                      <label className="text-xs font-medium text-gray-600 mb-1 block">Job Title *</label>
-                      <input className="input" value={form.title} onChange={set('title')}
-                        placeholder="e.g. Software Engineer" required />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-gray-600 mb-1 block">Organization</label>
-                      <input className="input" value={form.organization} onChange={set('organization')}
-                        placeholder="Company / Department" />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-gray-600 mb-1 block">Location</label>
-                      <input className="input" value={form.location} onChange={set('location')}
-                        placeholder="Delhi / Remote" />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-gray-600 mb-1 block">Category *</label>
-                      <select className="input" value={form.categoryId} onChange={set('categoryId')} required>
-                        <option value="">Select category</option>
-                        {categories.map((c) => (
-                          <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-gray-600 mb-1 block">Status</label>
-                      <select className="input" value={form.status} onChange={set('status')}>
-                        <option value="ACTIVE">Active</option>
-                        <option value="CLOSED">Closed</option>
-                        <option value="DRAFT">Draft</option>
-                      </select>
-                    </div>
-                    <div className="col-span-2">
-                      <label className="text-xs font-medium text-gray-600 mb-1 block">Application Link *</label>
-                      <input className="input" value={form.applicationLink}
-                        onChange={set('applicationLink')}
-                        placeholder="https://example.com/apply" type="url" required />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-gray-600 mb-1 block">Qualification</label>
-                      <input className="input" value={form.qualification} onChange={set('qualification')}
-                        placeholder="B.Tech / Graduation" />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-gray-600 mb-1 block">Salary</label>
-                      <input className="input" value={form.salary} onChange={set('salary')}
-                        placeholder="₹30,000 - ₹50,000" />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-gray-600 mb-1 block">Last Date</label>
-                      <input className="input" type="date" value={form.lastDate} onChange={set('lastDate')} />
-                    </div>
-                    <div className="flex items-center gap-2 pt-5">
-                      <input type="checkbox" id="featured" checked={form.featured}
-                        onChange={set('featured')} className="w-4 h-4 accent-blue-600" />
-                      <label htmlFor="featured" className="text-sm text-gray-600">Mark as Featured</label>
-                    </div>
-                    <div className="col-span-2">
-                      <label className="text-xs font-medium text-gray-600 mb-1 block">Description</label>
-                      <textarea className="input resize-none" rows={4} value={form.description}
-                        onChange={set('description')}
-                        placeholder="Job description, eligibility, how to apply..." />
+
+                <form onSubmit={handleSubmit} className="p-5 space-y-5">
+
+                  {/* Section 1 - Basic Info */}
+                  <div>
+                    <h3 className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-3">
+                      📌 Basic Information
+                    </h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="col-span-2">
+                        <label className="text-xs font-medium text-gray-600 mb-1 block">Job Title *</label>
+                        <input className="input" value={form.title} onChange={set('title')}
+                          placeholder="e.g. BPSC 72nd CCE Pre 2026" required />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-gray-600 mb-1 block">Organization</label>
+                        <input className="input" value={form.organization} onChange={set('organization')}
+                          placeholder="e.g. Bihar Public Service Commission" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-gray-600 mb-1 block">Location</label>
+                        <input className="input" value={form.location} onChange={set('location')}
+                          placeholder="e.g. Bihar / All India" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-gray-600 mb-1 block">Category *</label>
+                        <select className="input" value={form.categoryId} onChange={set('categoryId')} required>
+                          <option value="">Select category</option>
+                          {categories.map((c) => (
+                            <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-gray-600 mb-1 block">Status</label>
+                        <select className="input" value={form.status} onChange={set('status')}>
+                          <option value="ACTIVE">Active</option>
+                          <option value="CLOSED">Closed</option>
+                          <option value="DRAFT">Draft</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-gray-600 mb-1 block">Total Posts</label>
+                        <input className="input" value={form.totalPosts} onChange={set('totalPosts')}
+                          placeholder="e.g. 1186 Posts" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-gray-600 mb-1 block">Qualification</label>
+                        <input className="input" value={form.qualification} onChange={set('qualification')}
+                          placeholder="e.g. Graduation / B.Tech" />
+                      </div>
                     </div>
                   </div>
-                  <div className="flex gap-2 pt-2">
+
+                  {/* Section 2 - Salary & Age */}
+                  <div>
+                    <h3 className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-3">
+                      💰 Salary & Eligibility
+                    </h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs font-medium text-gray-600 mb-1 block">Salary / Pay Scale</label>
+                        <input className="input" value={form.salary} onChange={set('salary')}
+                          placeholder="e.g. ₹30,000 - ₹50,000" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-gray-600 mb-1 block">Age Limit</label>
+                        <input className="input" value={form.ageLimit} onChange={set('ageLimit')}
+                          placeholder="e.g. 20-37 Years" />
+                      </div>
+                      <div className="col-span-2">
+                        <label className="text-xs font-medium text-gray-600 mb-1 block">Application Fee</label>
+                        <input className="input" value={form.applicationFee} onChange={set('applicationFee')}
+                          placeholder="e.g. ₹100 General | Free for SC/ST" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 3 - Important Dates */}
+                  <div>
+                    <h3 className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-3">
+                      📅 Important Dates
+                    </h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs font-medium text-gray-600 mb-1 block">Last Date to Apply</label>
+                        <input className="input" type="date" value={form.lastDate} onChange={set('lastDate')} />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-gray-600 mb-1 block">Exam Date</label>
+                        <input className="input" value={form.examDate} onChange={set('examDate')}
+                          placeholder="e.g. Notify Later / June 2026" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-gray-600 mb-1 block">Admit Card Date</label>
+                        <input className="input" value={form.admitCardDate} onChange={set('admitCardDate')}
+                          placeholder="e.g. Before Exam" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 4 - Links */}
+                  <div>
+                    <h3 className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-3">
+                      🔗 Links
+                    </h3>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-xs font-medium text-gray-600 mb-1 block">Application Link *</label>
+                        <input className="input" value={form.applicationLink} onChange={set('applicationLink')}
+                          placeholder="https://example.com/apply" type="url" required />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-gray-600 mb-1 block">📄 Official Notification PDF</label>
+                        <input className="input" value={form.notificationLink} onChange={set('notificationLink')}
+                          placeholder="https://example.com/notification.pdf" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-gray-600 mb-1 block">📚 Syllabus Link</label>
+                        <input className="input" value={form.syllabusLink} onChange={set('syllabusLink')}
+                          placeholder="https://example.com/syllabus.pdf" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 5 - Extra */}
+                  <div>
+                    <h3 className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-3">
+                      📝 Additional Details
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <input type="checkbox" id="featured" checked={form.featured}
+                          onChange={set('featured')} className="w-4 h-4 accent-blue-600" />
+                        <label htmlFor="featured" className="text-sm text-gray-600">
+                          ⭐ Mark as Featured Job
+                        </label>
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-gray-600 mb-1 block">Description</label>
+                        <textarea className="input resize-none" rows={4} value={form.description}
+                          onChange={set('description')}
+                          placeholder="Any extra details, selection process, how to apply..." />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 pt-2 sticky bottom-0 bg-white pb-2">
                     <button type="button" onClick={() => setShowForm(false)}
                       className="btn-secondary flex-1">Cancel</button>
                     <button type="submit" disabled={saving}
@@ -290,9 +396,7 @@ export default function AdminPage() {
             <div className="flex justify-center gap-2 mt-6">
               <button onClick={() => setPage(p => p - 1)} disabled={page === 0}
                 className="btn-secondary py-1 px-3 text-sm disabled:opacity-40">Prev</button>
-              <span className="text-sm text-gray-500 py-1">
-                Page {page + 1} / {totalPages}
-              </span>
+              <span className="text-sm text-gray-500 py-1">Page {page + 1} / {totalPages}</span>
               <button onClick={() => setPage(p => p + 1)} disabled={page + 1 >= totalPages}
                 className="btn-secondary py-1 px-3 text-sm disabled:opacity-40">Next</button>
             </div>
@@ -316,7 +420,7 @@ export default function AdminPage() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <div className="font-semibold text-gray-900">{msg.name}</div>
-                      {!msg.read && (
+                      {!msg.is_read && (
                         <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
                           New
                         </span>
