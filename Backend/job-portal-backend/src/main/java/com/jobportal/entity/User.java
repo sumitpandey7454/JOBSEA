@@ -19,6 +19,17 @@ public class User {
 
     private String name;
     private String profilePicture;
+    
+    @PrePersist
+    public void prePersist() {
+        if (this.role == null) {
+            this.role = Role.USER;
+        }
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now();
+        }
+        this.enabled = true;
+    }
 
     @Enumerated(EnumType.STRING)
     private AuthProvider authProvider;
