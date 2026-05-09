@@ -89,7 +89,8 @@ public class AuthService {
             user.setEnabled(true);
             user = userRepository.save(user);
 
-            String token = jwtUtil.generateToken(user.getId(), user.getRole().name());
+            String roleStr = (user.getRole() != null) ? user.getRole().name() : "USER";
+            String token = jwtUtil.generateToken(user.getId(), roleStr);
 
             log.info("Google login successful for: {}", email);
 
