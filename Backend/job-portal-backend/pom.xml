@@ -13,7 +13,7 @@
 
     <groupId>com.jobportal</groupId>
     <artifactId>job-portal-backend</artifactId>
-    <version>0.0.2-SNAPSHOT</version>
+    <version>0.0.1-SNAPSHOT</version>
     <name>job-portal-backend</name>
 
     <properties>
