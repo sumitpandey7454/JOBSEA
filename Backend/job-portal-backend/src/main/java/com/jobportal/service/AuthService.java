@@ -53,10 +53,11 @@ public class AuthService {
 
     public AuthResponse loginWithGoogle(GoogleAuthRequest request) throws Exception {
         try {
-            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
-                    new NetHttpTransport(), GsonFactory.getDefaultInstance())
-                    .setAudience(Collections.singletonList(googleClientId))
-                    .build();
+        	GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
+        	        new NetHttpTransport(), GsonFactory.getDefaultInstance())
+        	        .setAudience(Collections.singletonList(googleClientId))
+        	        .setAcceptableTimeSkewSeconds(300)
+        	        .build();
 
             GoogleIdToken idToken = verifier.verify(request.getIdToken());
             if (idToken == null) {
