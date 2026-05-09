@@ -74,14 +74,17 @@ public class AuthService {
 
             boolean isNewUser = !userRepository.existsByEmail(email);
 
-            User user = userRepository.findByEmail(email).orElseGet(() ->
-                    User.builder()
-                            .email(email)
-                            .name(name)
-                            .profilePicture(picture)
-                            .authProvider(User.AuthProvider.GOOGLE)
-                            .build()
-            );
+            User user = userRepository.findByEmail(email).orElseGet(() -> {
+                User newUser = new User();
+                newUser.setEmail(email);
+                newUser.setName(name);
+                newUser.setProfilePicture(picture);
+                newUser.setAuthProvider(User.AuthProvider.GOOGLE);
+                newUser.setRole(User.Role.USER);
+                newUser.setEnabled(true);
+                newUser.setCreatedAt(LocalDateTime.now());
+                return newUser;
+        });
 
             user.setName(name);
             user.setProfilePicture(picture);
