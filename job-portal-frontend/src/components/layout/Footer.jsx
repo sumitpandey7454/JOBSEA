@@ -134,7 +134,9 @@ export default function Footer() {
 
         {/* Bottom bar */}
         <div className="border-t border-gray-800 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-gray-500">
-          <p>© {new Date().getFullYear()} JOBSEA. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} JOBSEA. All rights reserved. 
+  <a href="/privacy" className="ml-2 hover:text-blue-400 underline">Privacy Policy</a>
+</p>
           <p className="flex items-center gap-1">
             Made with
             <Heart size={12} className="text-red-400 fill-red-400 mx-1" />
