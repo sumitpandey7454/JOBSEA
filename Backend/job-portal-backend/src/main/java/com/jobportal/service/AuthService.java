@@ -81,12 +81,18 @@ public class AuthService {
                 user.setEmail(email);
                 user.setAuthProvider(User.AuthProvider.GOOGLE);
                 user.setCreatedAt(LocalDateTime.now());
+                user.setRole(User.Role.USER);
+                user.setEnabled(true);
             }
 
             user.setName(name);
             user.setProfilePicture(picture);
-            user.setRole(user.getRole() == null ? User.Role.USER : user.getRole());
-            user.setEnabled(true);
+
+            // Safety check
+            if (user.getRole() == null) {
+                user.setRole(User.Role.USER);
+            }
+
             user = userRepository.save(user);
 
             String roleStr = (user.getRole() != null) ? user.getRole().name() : "USER";
