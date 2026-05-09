@@ -166,16 +166,18 @@ public class AuthService {
 
         boolean isNewUser = !userRepository.existsByPhoneNumber(phone);
 
-        User user = userRepository.findByPhoneNumber(phone).orElseGet(() ->
-                User.builder()
-                        .phoneNumber(phone)
-                        .name("User " + phone.substring(phone.length() - 4))
-                        .authProvider(User.AuthProvider.PHONE)
-                        .build()
-        );
+        User user = userRepository.findByPhoneNumber(phone).orElseGet(() -> {
+            User newUser = new User();
+            newUser.setPhoneNumber(phone);
+            newUser.setName("User " + phone.substring(phone.length() - 4));
+            newUser.setAuthProvider(User.AuthProvider.PHONE);
+            newUser.setRole(User.Role.USER);
+            newUser.setEnabled(true);
+            newUser.setCreatedAt(LocalDateTime.now());
+            return newUser;
+    });
 
         user = userRepository.save(user);
-
         String token = jwtUtil.generateToken(user.getId(), user.getRole().name());
 
         return AuthResponse.builder()
