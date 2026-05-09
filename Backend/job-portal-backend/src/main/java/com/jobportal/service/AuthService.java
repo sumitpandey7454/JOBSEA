@@ -180,6 +180,7 @@ public class AuthService {
         user = userRepository.save(user);
         String token = jwtUtil.generateToken(user.getId(), user.getRole().name());
 
+        
         return AuthResponse.builder()
                 .token(token)
                 .name(user.getName())
