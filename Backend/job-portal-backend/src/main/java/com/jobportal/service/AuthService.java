@@ -74,26 +74,19 @@ public class AuthService {
 
             boolean isNewUser = !userRepository.existsByEmail(email);
 
-            User user = userRepository.findByEmail(email).orElseGet(() -> {
-                User newUser = new User();
-                newUser.setEmail(email);
-                newUser.setName(name);
-                newUser.setProfilePicture(picture);
-                newUser.setAuthProvider(User.AuthProvider.GOOGLE);
-                newUser.setRole(User.Role.USER);
-                newUser.setEnabled(true);
-                newUser.setCreatedAt(LocalDateTime.now());
-                return newUser;
-        });
+            User user = userRepository.findByEmail(email).orElse(null);
+
+            if (user == null) {
+                user = new User();
+                user.setEmail(email);
+                user.setAuthProvider(User.AuthProvider.GOOGLE);
+                user.setCreatedAt(LocalDateTime.now());
+            }
 
             user.setName(name);
             user.setProfilePicture(picture);
-            if (user.getRole() == null) {
-                user.setRole(User.Role.USER);
-            }
-            if (!user.isEnabled()) {
-                user.setEnabled(true);
-            }
+            user.setRole(user.getRole() == null ? User.Role.USER : user.getRole());
+            user.setEnabled(true);
             user = userRepository.save(user);
 
             String token = jwtUtil.generateToken(user.getId(), user.getRole().name());
