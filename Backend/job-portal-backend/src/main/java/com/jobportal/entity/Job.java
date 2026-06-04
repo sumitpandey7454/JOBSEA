@@ -24,7 +24,7 @@ public class Job {
 
     private String location; // e.g. "Delhi", "Remote", "All India"
 
-    @Column(length = 2000)
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     @Column(nullable = false)

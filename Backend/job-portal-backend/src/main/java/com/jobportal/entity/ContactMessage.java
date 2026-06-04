@@ -21,7 +21,7 @@ public class ContactMessage {
 
     private String email;
 
-    @Column(length = 2000)
+    @Column(columnDefinition = "TEXT")
     private String message;
 
     @Column(name = "is_read")
